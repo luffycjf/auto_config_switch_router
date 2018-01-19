@@ -1,0 +1,11 @@
+$IP:
+1.1.1.1
+2.2.2.2
+$CONFIG:
+show run
+show clock
+
+$IP:
+3.3.3.3
+$CONFIG:
+show time
