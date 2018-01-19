@@ -16,6 +16,7 @@ config.py 文件中可以设置设备登录密码等参数。
 
 configuration.txt 这个文件等同于我们的割接单
 格式如下
+
 $IP: 设备的管理IP
 100.127.17.11
 $CONFIG: 设备的配置命令
@@ -30,6 +31,5 @@ show vrf all
 show history
 $PING:   如果需要使用ping检测，请将IP贴在下面
 10.185.135.240
-
-
 每个设备操作需要包含$IP:、$CONFIG:、$CHECK:、$PING:，其中$CONFIG:、$CHECK:、$PING:可以重复使用。
+
