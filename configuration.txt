@@ -1,0 +1,33 @@
+$IP:
+10.17.17.11
+$CONFIG:
+configure terminal
+show vrf all
+$CHECK:
+terminal length 0
+show clock
+$CONFIG:
+configure terminal
+show vrf all
+show history 
+$PING:
+10.15.15.40
+
+
+
+
+$IP:
+10.17.17.16
+$CONFIG:
+system-view
+display vpn-group
+$PING:
+10.17.17.16
+10.29.92.12
+$CONFIG:
+system-view
+display vpn-group 
+$CHECK:
+screen-length 0 temporary 
+display ip vpn-instance 
+
