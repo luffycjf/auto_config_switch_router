@@ -23,7 +23,6 @@ def config_dev_ssh(ip, commands):
         return out
     a = client.invoke_shell()
     a.recv('')
-    print str(commands)
     time.sleep(1)
     for command in commands:
         a.send(command+'\r')
