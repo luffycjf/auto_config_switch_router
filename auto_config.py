@@ -8,6 +8,78 @@ try:
 except:
     config = {'config_username':'','config_password':'','show_username':'','show_password':'','ssh_port':'22','login_method':''}
 
+
+stdmore = re.compile(r"-[\S\s]*[Mm]ore[\S\s]*-")
+hostname_endcondition = re.compile(r"\S+[#>\]]\s*$")
+
+class ssh_comm(object):
+    def __init__(self,address,username,password,port=22):
+        self.client = paramiko.SSHClient()
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.client.connect(address, port=port, username=username, password=password, look_for_keys=False,allow_agent=False)
+        self.shell = self.client.invoke_shell()
+        while True:
+            time.sleep(0.5)
+            if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                break
+        output = self.shell.recv(4096)
+        while True:
+            if hostname_endcondition.findall(output):
+                self.hostname = hostname_endcondition.findall(output)[0].strip().strip('<>[]#')
+                print self.hostname
+                break
+            while True:
+                time.sleep(0.1)
+                if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                    break
+            output += self.shell.recv(4096)
+    def recv_all(self,interval,stdjudge,stdconfirm):
+        endcondition = re.compile(r"%s[#>\]]\s*$"%self.hostname)
+        while True:
+            time.sleep(interval)
+            if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                break
+        output = self.shell.recv(99999)
+        if (stdjudge != '') and (stdjudge in output):
+            self.shell.send(stdconfirm+'\n')
+        while True:
+            if stdmore.findall(output.split('\n')[-1]):
+                break
+            elif endcondition.findall(output):
+                break
+            while True:
+                time.sleep(interval)
+                if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                    break
+            output += self.shell.recv(99999)
+        return output
+    def send_command(self,command_interval,command,stdjudge,stdconfirm):
+        command += "\n"
+        self.shell.send(command)
+        stdout = self.recv_all(interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
+        data = stdout.split('\n')
+        while stdmore.findall(data[-1]):
+            self.shell.send(" ")
+            tmp = self.recv_all(interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
+            data = tmp.split('\n')
+            stdout += tmp
+        return stdout
+    def close(self):
+        if self.client is not None:
+            self.client.close()
+    def run(self,cmds,command_interval,stdjudge,stdconfirm):
+        stderr = ['^','ERROR','Error','error','invalid','Invalid','Ambiguous','ambiguous']
+        stdout = ''
+        res = 'success'
+        for cmd in cmds.split('\n'):
+            if cmd.strip():
+                stdout += self.send_command(command=cmd,command_interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
+        for err in stderr:
+            if err in stdout:
+                res = 'some command wrong'
+        return res, stdout
+
+
 def config_dev_ssh(ip, commands):
     try_times = 0
     while True:
@@ -19,38 +91,27 @@ def config_dev_ssh(ip, commands):
             username = raw_input('请输入aaa用户名：')
             password = raw_input('请输入aaa密码： ')
         port = 22
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try_times += 1
         try:
-            client.connect(ip, port , username, password, timeout=5)
+	    connection = ssh_comm(address=ip, username=username, password=password, port=port)
             break
         except:
             print 'wrong password,please try agagin!'
         if try_times > 2:
             sys.exit('wrong password more than tree times,out!')
-    a = client.invoke_shell()
-    client1 = paramiko.SSHClient()
-    client1.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     if password_config['show_username'] != '' and password_config['show_password'] != '':
         show_username = config['show_username']
         show_password = config['show_password']
     else:
         show_username = username
         show_password = password
-    client1.connect(ip, port , show_username,show_password, timeout=5)
-    b = client1.invoke_shell()
-    b.recv('')
+    connection1 = ssh_comm(address=ip, username=show_username, password=show_password, port=port)
     for command in commands:
         if len(command['config']) != 0:
-            for config_command in command['config']:
-                a.send(config_command+'\r')
-                time.sleep(1)
+            res,stdout = connection.run(cmds=command['config'],command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
         if len(command['check']) != 0:
-            for check_command in command['check']:
-                b.send(check_command+'\r')
-                time.sleep(1)
-            print b.recv('')
+	    res1,stdout1 = connection.run(cmds=command['check'],command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
+            print stdout1
         if len(command['ping']) != 0:
             threads = []
             for ping_host in command['ping']:
