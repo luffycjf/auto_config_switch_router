@@ -26,7 +26,6 @@ class ssh_comm(object):
         while True:
             if hostname_endcondition.findall(output):
                 self.hostname = hostname_endcondition.findall(output)[0].strip().strip('<>[]#')
-                print self.hostname
                 break
             while True:
                 time.sleep(0.1)
