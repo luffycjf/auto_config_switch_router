@@ -25,18 +25,18 @@ class ssh_comm(object):
             time.sleep(0.5)
             if self.shell.recv_ready() or self.shell.recv_stderr_ready():
                 break
-	output = self.shell.recv(4096)
-	while True:
-	    if hostname_endcondition.findall(output):
-		self.hostname = hostname_endcondition.findall(output)[0].strip().strip('<>[]#')
-		break
-	    while True:
-		time.sleep(0.1)
-		if self.shell.recv_ready() or self.shell.recv_stderr_ready():
-		    break
-	    output += self.shell.recv(4096)
+        output = self.shell.recv(4096)
+        while True:
+            if hostname_endcondition.findall(output):
+                self.hostname = hostname_endcondition.findall(output)[0].strip().strip('<>[]#')
+                break
+            while True:
+                time.sleep(0.1)
+                if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                    break
+            output += self.shell.recv(4096)
     def recv_all(self,interval,stdjudge,stdconfirm):
-	endcondition = re.compile(r"%s[#>\]]\s*$"%self.hostname)
+        endcondition = re.compile(r"%s[#>\]]\s*$"%self.hostname)
         while True:
             time.sleep(interval)
             if self.shell.recv_ready() or self.shell.recv_stderr_ready():
@@ -73,16 +73,16 @@ class ssh_comm(object):
         stdout = ''
         rc = 'success'
         for cmd in cmds.split('\n'):
-	    if cmd.strip():
-		stdout += self.send_command(command=cmd,command_interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
+            if cmd.strip():
+                stdout += self.send_command(command=cmd,command_interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
         return rc, stdout
 
 def writeoutput(address,username,password,cmds):
     try:
-	connection = ssh_comm(address=address, username=username, password=password, port=22)
+        connection = ssh_comm(address=address, username=username, password=password, port=22)
     except:
-	rc = 'connection failed'
-	return address,rc
+        rc = 'connection failed'
+        return address,rc
     stdjudge = 'Y/N'
     stdconfirm = 'Y'
     rc,stdout = connection.run(cmds=cmds,command_interval=0.1,stdjudge=stdjudge,stdconfirm=stdconfirm)
@@ -90,37 +90,37 @@ def writeoutput(address,username,password,cmds):
     hostname = connection.hostname.split('/')[-1].split(':')[-1]
 #    hostname = os.popen('/usr/local/net-snmp/bin/snmpwalk -v 2c -c tcnw %s sysname -Oqv'%address).read().strip()
     if not os.path.exists(hostname):
-	os.makedirs(hostname)
+        os.makedirs(hostname)
     filename = hostname+'-'+time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))
     with open ('%s/%s.txt'%(hostname,filename),'w') as f:
-	f.write(stdout)
+        f.write(stdout)
     return address,rc
     
 def main(username,password,hosts,cmds):
     if username == '':
-	username = raw_input('请输入aaa用户名：')
+        username = raw_input('请输入aaa用户名：')
     if password == '':
-	password = raw_input('请输入aaa密码： ')
+        password = raw_input('请输入aaa密码： ')
     if hosts == '':
-	hosts = raw_input('请输入主机地址： ')
+        hosts = raw_input('请输入主机地址： ')
     if cmds == '':
-	cmds = raw_input('请输入采集命令： ')
+        cmds = raw_input('请输入采集命令： ')
     host_list = hosts.split('\n')
     if len(host_list) < 5:
-	processnum = len(host_list)
+        processnum = len(host_list)
     else:
-	processnum = 5
+        processnum = 5
     pool = multiprocessing.Pool(processes=processnum )
     process = []
     for host in host_list:
-	if host:
-	    process.append(pool.apply_async(writeoutput, (host.strip(),username,password,cmds)))
+        if host:
+            process.append(pool.apply_async(writeoutput, (host.strip(),username,password,cmds)))
     pool.close()
     pool.join()
     outs = ''
     for o in process:
-	rc,ip = o.get()
-	print '%s:  %s'%(ip,rc)
+        rc,ip = o.get()
+        print '%s:  %s'%(ip,rc)
 
 if __name__== '__main__':
     main(username,password,hosts,cmds)
