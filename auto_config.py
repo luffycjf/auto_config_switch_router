@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
-import paramiko,time,telnetlib,sys,os
+import paramiko,time,telnetlib,sys,os,re
 import threading
 try:
     from config import config
@@ -55,7 +55,15 @@ class ssh_comm(object):
     def send_command(self,command_interval,command,stdjudge,stdconfirm):
         command += "\n"
         self.shell.send(command)
-        stdout = self.recv_all(interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
+        if ('hostname' in command) or ('sysname' in command):
+            while True:
+                time.sleep(0.5)
+                if self.shell.recv_ready() or self.shell.recv_stderr_ready():
+                    break
+            stdout = self.shell.recv(4096)
+            self.hostname = hostname_endcondition.findall(stdout)[-1].strip().strip('<>[]#')
+        else:
+            stdout = self.recv_all(interval=command_interval,stdjudge=stdjudge,stdconfirm=stdconfirm)
         data = stdout.split('\n')
         while stdmore.findall(data[-1]):
             self.shell.send(" ")
