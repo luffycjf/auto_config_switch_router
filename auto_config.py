@@ -22,6 +22,8 @@ class ssh_comm(object):
             time.sleep(0.5)
             if self.shell.recv_ready() or self.shell.recv_stderr_ready():
                 break
+        self.shell.recv(4096)
+        self.shell.send('\n')
         output = self.shell.recv(4096)
         while True:
             if hostname_endcondition.findall(output):
