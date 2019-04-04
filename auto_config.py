@@ -237,7 +237,7 @@ if __name__== '__main__':
         if config['login_method'] == 'telnet':
             config_dev_tel(i,result[i])
         else:
-            config_dev_ssh,(i,result[i])
+            config_dev_ssh(i,result[i])
         print 'device_ip: %s is done !'%i
         print(''.ljust(101,'#'))
         print('\n')
