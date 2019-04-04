@@ -117,9 +117,9 @@ def config_dev_ssh(ip, commands):
     connection1 = ssh_comm(address=ip, username=show_username, password=show_password, port=port)
     for command in commands:
         if len(command['config']) != 0:
-            res,stdout = connection.run(cmds=command['config'],command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
+            res,stdout = connection.run(cmds=('\n').join(command['config']),command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
         if len(command['check']) != 0:
-            res1,stdout1 = connection.run(cmds=command['check'],command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
+            res1,stdout1 = connection.run(cmds=('\n').join(command['check']),command_interval=0.1,stdjudge='Y/N',stdconfirm='Y')
             print stdout1
         if len(command['ping']) != 0:
             threads = []
@@ -230,7 +230,7 @@ def readconfigs(config_name):
 if __name__== '__main__':
     result,ip_list = readconfigs('configuration.txt')
     if config['login_method'] == '':
-        config['login_method'] = raw_input('使用哪种登录方式ssh还是telnet,请输入telnet或者ssh')
+        config['login_method'] = raw_input('使用哪种登录方式ssh还是telnet,请输入telnet或者ssh: ')
     for i in ip_list:
         print(''.ljust(101,'#'))
         print 'device_ip: %s is configing !'%i
